@@ -1,0 +1,48 @@
+{% load static %}
+
+<footer class="container-fluid bg-dark text-white text-center p-2 mt-4">
+  <div class="container py-4">
+    <div class="row">
+        <div class="col-md-3 mb-3">
+        </br></br>
+          <p class="small">Our store offers a diverse range of books including primary, secondary,
+            and tertiary textbooks, as well as inspirational and spiritual
+            literature. Explore our collection to find something for every reader,
+            young or old.</p>
+        </div>
+        <div class="col-md-3 mb-3">
+            <h5>Navigation</h5></br>
+            <ul class="list-unstyled small">
+                <li class="mb-2"><a href="/" class="text-white text-decoration-none footer-link">Home</a></li>
+                <li class="mb-2"><a href="{% url 'about' %}" class="text-white text-decoration-none footer-link">About us</a></li>
+                <li class="mb-2"><a href="#" class="text-white text-decoration-none footer-link">Login</a></li>
+                <li class="mb-2"><a href="{% url 'contact' %}" class="text-white text-decoration-none footer-link">Contact us</a></li>
+            </ul>
+        </div>
+        <div class="col-md-3 mb-0">
+          <h5>Book Categories</h5></br>
+          <ul class="list-unstyled small">
+              <li class="mb-2"><a href="{% url 'category' 'PY' %}" class="text-white text-decoration-none footer-link">Primary</a></li>
+              <li class="mb-2"><a href="{% url 'category' 'SY' %}" class="text-white text-decoration-none footer-link">Secondary</a></li>
+              <li class="mb-2"><a href="{% url 'category' 'TY' %}" class="text-white text-decoration-none footer-link">Tertiary</a></li>
+              <li class="mb-2"><a href="{% url 'category' 'IL' %}" class="text-white text-decoration-none footer-link">Inspirational</a></li>
+              <li class="mb-2"><a href="{% url 'category' 'SL' %}" class="text-white text-decoration-none footer-link">Spiritual</a></li>
+              <li class="mb-2"><a href="{% url 'category' 'OT' %}" class="text-white text-decoration-none footer-link">Others</a></li>
+          </ul>
+      </div>
+        <div class="col-md-3 mb-3">
+            <h5>Contact</h5></br>
+            <ul class="list-unstyled small">
+                <li>123 Street Name</li>
+                <li>Ibadan, Oyo State, 12345</li>
+                <li>(123) 456-7890</li>
+                <li>email@example.com</li>
+            </ul>
+        </div>
+    </div>
+  </div>
+  <div class="bg-secondary text-center py-2">
+      <p class="mb-0"> Copyright © {{current_year}} book.com | All rights reserved.</p>
+  </div>
+</footer>
+

@@ -1,0 +1,22 @@
+{% extends "app/base.html" %}
+{% load static %}
+{% block title %}Payment Error{% endblock title %}
+
+{% block main-content %}
+<div class="container">
+    <div class="row my-3">
+        <div class="col-sm-6 offset-sm-3">
+            <div class="alert alert-danger">
+                <h3 class="alert-heading">Payment Error</h3>
+                <p>{{ error }}</p>
+                <p><b>There was an issue with your payment. Please try again or contact support if the problem persists.</b></p>
+                <a href="{% url 'checkout' %}" class="btn btn-primary mt-3">Return to Checkout</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock main-content %}
+
+{% block footer %}
+<!-- Intentionally left blank to remove footer -->
+{% endblock footer %}
