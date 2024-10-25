@@ -48,6 +48,28 @@
   overflow:hidden;
 }
 
+.nav-link {
+  position: relative; /* Needed for absolute positioning of the badge */
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1); /* Light background on hover */
+}
+
 .footer-link:hover {
-  color: green;
+  color: #50C878 !important;
+}
+
+.cart-badge {
+  display: inline-block;
+  background-color: red;
+  color: white;
+  border-radius: 50%;
+  padding: 3px 7px;
+  font-size: 12px;
+  font-weight: bold;
+  position: absolute; /* Position the badge absolutely */
+  top: -7px; /* Adjust this value to move the badge up or down */
+  right: -10px; /* Adjust this value to move the badge left or right */
+  border: 1px solid white;
 }

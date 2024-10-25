@@ -76,57 +76,76 @@
 <script src="https://js.paystack.co/v1/inline.js"></script>
 <script type="text/javascript">
 
-     // Function to get the CSRF token from the cookies
-     function getCSRFToken() {
-      var cookies = document.cookie.split(';');
-      for (var i = 0; i < cookies.length; i++) {
-          var cookie = cookies[i].trim();
-          if (cookie.startsWith('csrftoken=')) {
-              return cookie.substring('csrftoken='.length, cookie.length);
-          }
-      }
-      return null;
-  }
+    // Function to get the CSRF token from the cookies
+    function getCSRFToken() {
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith('csrftoken=')) {
+                return cookie.substring('csrftoken='.length, cookie.length);
+            }
+        }
+        return null;
+    }
 
     document.getElementById('paystack-button').addEventListener('click', function (e) {
         e.preventDefault();
+        
+        // Get the total amount from the form and multiply by 100 to convert to kobo
         var totalAmount = document.querySelector('input[name="totalamount"]').value * 100;  
+        
+        // Get the user's email (assuming you're passing the user object in your template)
         var email = "{{ request.user.email }}";  
+        
+        // Get the form and customer ID
         var form = document.getElementById('myform');
-        var customerID = form.custid.value; 
+        var customerID = form.custid.value;
+        
+        // Ensure a customer ID (shipping address) is selected
         if (!customerID) {
             alert('Please select a shipping address.');
             return;
         }
+        
+        // Initialize Paystack payment modal
         var handler = PaystackPop.setup({
-            key: 'pk_test_8e5f8dc29085db42da183fb617cf5bb11e3fb452',  
+            key: 'pk_test_8e5f8dc29085db42da183fb617cf5bb11e3fb452',  // Paystack public test key
             email: email,
             amount: totalAmount,  
             currency: 'NGN',
+            
+            // Function to handle the successful payment callback
             callback: function(response) {
-                // Successful transaction
-                var reference = response.reference;
-                // Use AJAX to send reference and form data to backend
+                var reference = response.reference;  // Get the reference from Paystack response
+                
+                // Use AJAX to send the reference and customer ID to the backend for payment verification
                 var xhr = new XMLHttpRequest();
                 xhr.open("POST", "/payment/callback/");
                 xhr.setRequestHeader("Content-Type", "application/json");
-                xhr.setRequestHeader("X-CSRFToken", getCSRFToken());  // Include CSRF token
+                xhr.setRequestHeader("X-CSRFToken", getCSRFToken());  // Include CSRF token for security
+                
                 xhr.onload = function () {
                     if (xhr.status === 200) {
-                        // Redirect to success page
-                        {% comment %} window.location.reload(); {% endcomment %}
+                        // If the payment is successfully verified, redirect to the orders page
+                        window.location.href = "/order/";  // Adjust the URL if necessary
                     } else {
+                        // Handle verification failure response
                         alert("Payment verification failed: " + xhr.responseText);
                     }
                 };
+                
                 xhr.onerror = function () {
-                    alert("An error occurred during the transaction.");
+                    alert("An error occurred during the payment process.");
                 };
+                
+                // Send the reference and customerID to the backend for verification
                 xhr.send(JSON.stringify({
                     reference: reference,
                     customerID: customerID
-                })); 
+                }));
             },
+            
+            // Function to handle payment modal closure
             onClose: function() {
                 alert('Payment cancelled.');
             }
@@ -135,6 +154,7 @@
         handler.openIframe();  // Open the Paystack payment modal
     });
 </script>
+
 {% endblock payment-gateway %}
 
 {% block footer %}

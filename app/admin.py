@@ -1,5 +1,7 @@
 from django.contrib import admin
+from django.urls import reverse
 from . models import Cart, CartItem, Customer, Product, Payment, OrderPlaced
+from django.utils.html import format_html
 
 # Register your models here.
 
@@ -9,7 +11,7 @@ class ProductModelAdmin(admin.ModelAdmin):
 
 @admin.register(Customer)
 class CustomerModelAdmin(admin.ModelAdmin):
-    list_display = ['id', 'user', 'locality', 'city', 'state', 'zipcode']
+    list_display = ['id', 'user', 'name', 'locality', 'city', 'state', 'mobile']
 
 @admin.register(Cart) 
 class CartModelAdmin(admin.ModelAdmin):
@@ -17,7 +19,10 @@ class CartModelAdmin(admin.ModelAdmin):
 
 @admin.register(CartItem)
 class CartItemModelAdmin(admin.ModelAdmin):
-    list_display = ['id', 'cart', 'product', 'quantity', 'total_price']
+    list_display = ['id', 'cart', 'products', 'quantity', 'total_price']
+    def products(self, obj):
+        link = reverse('admin:app_product_change', args=[obj.product.pk]) 
+        return format_html('<a href="{}">{}</a>', link, obj.product.title)
 
 @admin.register(Payment)
 class PaymentAdmin(admin.ModelAdmin):
@@ -25,4 +30,16 @@ class PaymentAdmin(admin.ModelAdmin):
 
 @admin.register(OrderPlaced)
 class OrderPlacedAdmin(admin.ModelAdmin):
-    list_display = ['user', 'product', 'quantity', 'status', 'ordered_date', 'total_cost', 'payment']
+    list_display = ['user', 'customers', 'products', 'quantity', 'status', 'ordered_date', 'total_cost', 'payments']
+
+    def customers(self, obj):
+        link = reverse('admin:app_customer_change', args=[obj.customer.pk]) 
+        return format_html('<a href="{}">{}</a>', link, obj.customer.name)
+
+    def products(self, obj):
+        link = reverse('admin:app_product_change', args=[obj.product.pk]) 
+        return format_html('<a href="{}">{}</a>', link, obj.product.title)
+    
+    def payments(self, obj):
+        link = reverse('admin:app_payment_change', args=[obj.payment.pk]) 
+        return format_html('<a href="{}">{}</a>', link, obj.payment.paystack_reference)

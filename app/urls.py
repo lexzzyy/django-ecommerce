@@ -9,7 +9,7 @@ from .forms import LoginForm, MyPasswordResetForm, MyPasswordChangeForm, MySetPa
 urlpatterns = [
     #admin
     path('grappelli/', include('grappelli.urls')),  # grappelli URLS
-    path('admin/', admin.site.urls),  # admin site URLS
+    path('admin/', admin.site.urls),  # admin site URLS 
 
     path('', views.home, name='home'),
     path('contact', views.contact, name='contact'),
@@ -20,13 +20,15 @@ urlpatterns = [
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('address/', views.address, name='address'),
     path('updateAddress/<int:pk>', views.updateAddress.as_view(), name='updateAddress'),
+    path('address/<int:pk>/delete/', views.delete_customer, name='delete_address'),  # Add this line
     
     path('add-to-cart/', views.add_to_cart, name='add-to-cart'),
     path('cart/', views.show_cart, name='showcart'),
     path('checkout/', views.checkout.as_view(), name='checkout'),
     path('payment/callback/', views.payment_callback, name='payment_callback'),
-    path('order-success/', views.order_success, name='order_success'),
-    
+    path('order/', views.orders, name='orders'),
+    path('search/', views.search, name='search'),
+
     path('pluscart/', views.plus_cart),
     path('minuscart/', views.minus_cart),  
     path('removecart/', views.remove_cart),
@@ -50,5 +52,11 @@ urlpatterns = [
     path('password-reset-complete/', auth_view.PasswordResetCompleteView.as_view(template_name='app/password_reset_complete.html'), 
     name='password_reset_complete'),
 
+
+
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 
   

@@ -28,4 +28,33 @@
     </form>
   </div>
 </div>
+
+
+<!-- Include SweetAlert scripts -->
+<link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.3/dist/sweetalert2.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{% if success %}
+  <script>
+    Swal.fire({
+      title: 'Success!',
+      text: 'Your address has been updated successfully.',
+      icon: 'success',
+      confirmButtonText: 'OK'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        window.location.href = "{% url 'address' %}";  // Redirect to the address page
+      }
+    });
+  </script>
+{% elif success == False %}
+  <script>
+    Swal.fire({
+      title: 'Error!',
+      text: 'There was a problem updating your address. Please try again.',
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+  </script>
+{% endif %}
+
 {% endblock main-content %}

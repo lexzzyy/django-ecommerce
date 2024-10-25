@@ -9,7 +9,7 @@
     
     <div class="col-sm-2 border-end">
       <ul class="list-unstyled">
-        <li class="d-grid"><a href="{% url 'profile' %}" class="btn">Profile</a></li>
+        <li class="d-grid"><a href="{% url 'profile' %}" class="btn btn-outline-secondary">Profile</a></li>
         <li class="d-grid"><a href="{% url 'address' %}" class="btn btn-primary">Address</a></li>
       </ul>
     </div>
@@ -29,7 +29,13 @@
               <p>State: {{ad.state}}</p>
               <p>Zipcode: {{ad.zipcode}}</p>
               <p class="text-center">
-                <a href="{% url 'updateAddress' pk=ad.id %}" type="button" class="btn btn-success">Update</a>
+                <div class="btn-group" role="group">
+                  <a href="{% url 'updateAddress' pk=ad.id %}" type="button" class="btn btn-success" style="margin-right: 20px;">Update</a>
+                  <form action="{% url 'delete_address' pk=ad.id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                  </form>
+                </div>
               </p>
             </div>
           </div>

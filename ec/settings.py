@@ -1,3 +1,4 @@
+
 """
 Django settings for ec project.
 
@@ -12,6 +13,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,9 +26,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-e*b01u($tz3utz2x$v#hs&#3^a7$kz&(@s8y8otjr#)==jjjdh'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['yourdomain.com', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -66,6 +68,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'app.context_processors.current_year',
+                'app.context_processors.cart_item_count',
             ],
         },
     },
@@ -124,14 +127,31 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR/'media'
 LOGIN_REDIRECT_URL = '/profile/' 
+LOGIN_URL = '/accounts/login/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_PORT = 587
+# EMAIL_USE_TLS = True
+# EMAIL_HOST_USER = 'cscdpnig@gmail.com'  # Your email address
+# EMAIL_HOST_PASSWORD = 'slww csnp hijy bjju'  # Your email password or app password
+DEFAULT_FROM_EMAIL = 'cscdpnig@gmail.com'  # domain mail
+
+load_dotenv()  # Load environment variables from a .env file
+
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'default_host')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
 # Paystack API Keys
-PAYSTACK_PUBLIC_KEY = 'pk_test_8e5f8dc29085db42da183fb617cf5bb11e3fb452'
-PAYSTACK_SECRET_KEY = 'sk_test_f2ca3a355107516a82ae74bc1505793fdc8039ba'
+PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
+PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 

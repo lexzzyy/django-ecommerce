@@ -1,11 +1,13 @@
 import json
 import logging
+
+from app.context_processors import cart_item_count
 logger = logging.getLogger(__name__)
 
 import uuid
 from django.conf import settings
 from django.db.models import Count
-from django.http import JsonResponse
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.views import View
 import requests
@@ -15,6 +17,8 @@ from django.contrib import messages
 from django.db.models import Q
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
 
 # Create your views here.
 def home(request):
@@ -87,21 +91,21 @@ class updateAddress(View):
     form = CustomerProfileForm(instance=add)
     return render(request, 'app/updateAddress.html', locals())   
   def post(self,request,pk):
-    form = CustomerProfileForm(request.POST)
+    add = get_object_or_404(Customer, pk=pk)  # Get the customer instance
+    form = CustomerProfileForm(request.POST, instance=add)  # Bind the form to the instance
     if form.is_valid():
-      add = Customer.objects.get(pk=pk)
-      add.name = form.cleaned_data['name']
-      add.locality = form.cleaned_data['locality']
-      add.city = form.cleaned_data['city']
-      add.mobile = form.cleaned_data['mobile']
-      add.state = form.cleaned_data['state']
-      add.zipcode = form.cleaned_data['zipcode']
-      add.save()
-      messages.success(request, "Congratulations! Profile Update Successfully")
+        form.save()  # Save the form directly, which updates the instance
+        success = True
     else:
-      messages.warning(request, "Invalid Input Data")
-    return redirect('address')
+        success = False   
+    return render(request, 'app/updateAddress.html', {'form': form, 'success': success})
+  
+def delete_customer(request, pk):
+    customer = get_object_or_404(Customer, pk=pk)
+    customer.delete()
+    return redirect('address')  # Redirect to address page after deletion
 
+@login_required(login_url='login')  # Ensures the user is logged in, redirects to login if not
 def add_to_cart(request):
     user = request.user
     product_id = request.GET.get('prod_id')
@@ -115,6 +119,7 @@ def add_to_cart(request):
         cart_item.increment_quantity()
     return redirect('/cart')
 
+@login_required(login_url='login')  # Redirect to login if user is not authenticated
 def show_cart(request):
     user = request.user
     cart = Cart.objects.get(user=user)
@@ -176,15 +181,13 @@ class checkout(View):
 
 @csrf_exempt
 def payment_callback(request):
-    if request.method == 'POST':  
-        return render(request, 'order_success.html')    
+    if request.method == 'POST':     
         data = json.loads(request.body)
         reference = data.get('reference')
+        customer_id = data.get('customerID')
         print(f"Received reference: {reference}")
-
         if not reference:
             return JsonResponse({'error': 'No reference provided'}, status=400)
-
         try:
             # Verify payment with Paystack API
             url = f'https://api.paystack.co/transaction/verify/{reference}'
@@ -193,11 +196,16 @@ def payment_callback(request):
             }
             response = requests.get(url, headers=headers)
             response_data = response.json()
-
+            
+            # Check if payment was successful
             if response_data['status'] and response_data['data']['status'] == 'success':
-                user = request.user
-                amount = response_data['data']['amount'] / 100  # Convert from kobo to naira
-
+                # Retrieve payment amount (convert from kobo to naira)
+                amount = response_data['data']['amount'] / 100
+                
+                # Retrieve user based on email (assuming user email matches payment email)
+                customer = Customer.objects.get(id=customer_id)  # Get the customer object
+                user = customer.user  # Assuming each customer is tied to a user
+                
                 with transaction.atomic():
                     # Get the user's cart
                     cart = Cart.objects.get(user=user)
@@ -205,12 +213,12 @@ def payment_callback(request):
 
                     # Calculate total order cost
                     total_order_cost = sum(item.product.selling_price * item.quantity for item in cart_items)
-
-                    # Optionally, add shipping or additional costs
-                    additional_fee = 1000  # Assuming an additional fixed fee
+                    
+                    # Additional fee (e.g., shipping)
+                    additional_fee = 1000
                     total_order_cost += additional_fee
 
-                    # Create payment record
+                    # Create payment record in your database
                     payment = Payment.objects.create(
                         user=user,
                         amount=amount,
@@ -219,11 +227,9 @@ def payment_callback(request):
                         paid=True
                     )
 
-                    # Safely handle the case of multiple Customers
-                    customers = Customer.objects.filter(user=user)
-                    if customers.exists():
-                        customer = customers.first()
-                    else:
+                    # Handle the user customer relation (assuming a customer exists)
+                    customer = Customer.objects.filter(user=user).first()
+                    if not customer:
                         return render(request, 'app/payment_error.html', {'error': 'No customer found for this user.'})
 
                     # Create orders for each cart item
@@ -234,34 +240,28 @@ def payment_callback(request):
                             product=item.product,
                             quantity=item.quantity,
                             payment=payment,
-                            total_order_cost=total_order_cost,  # Add the total order cost here
+                            total_order_cost=total_order_cost,
                             status='Pending'
                         )
 
-                    # Clear the cart after order placement
+                    # Clear the user's cart after placing the order
                     cart.items.all().delete()
+
                 print("Payment verified, redirecting to success page...")  
-                
-       
-                
-                   
-
-
-                
-
-
+                return JsonResponse({'message': 'Payment verified, orders created.'}, status=200)
             else:
-                return render(request, 'app/payment_error.html', {'error': response_data['data'].get('gateway_response', 'Payment failed.')})
+                # Handle payment failure response from Paystack
+                return JsonResponse({'error': 'Payment verification failed.'}, status=400)
 
-        except Payment.DoesNotExist:
-            logger.error(f'Payment not found for reference: {reference}')
-            return render(request, 'app/payment_error.html', {'error': 'Payment not found.'})
         except Exception as e:
-            logger.exception(f'An error occurred during payment processing: {e}')
-            return render(request, 'app/payment_error.html', {'error': 'An unexpected error occurred.'})
+            return JsonResponse({'error': f'Error: {str(e)}'}, status=500)
 
-def order_success(request):
-    return render(request, 'app/order_success.html') 
+def orders(request):
+    totalitem = 0
+    if request.user.is_authenticated:
+       totalitem = len(Cart.objects.filter(user=request.user))
+    order_placed = OrderPlaced.objects.filter(user=request.user)
+    return render(request, 'app/orders.html', locals()) 
 
 def plus_cart(request):
     if request.method == 'GET':
@@ -326,3 +326,19 @@ def remove_cart(request):
             'totalamount': totalamount,
         }
         return JsonResponse(data)
+    
+def search(request):
+    query = request.GET.get('search', '')
+    if not query:
+        return HttpResponseBadRequest("Search query cannot be empty.")
+    products = Product.objects.filter(Q(title__icontains=query))
+    cart_info = cart_item_count(request)
+    context = {
+        'products': products,
+        'query': query,
+        **cart_info  
+    }
+    return render(request, "app/search.html", context)
+
+# def custom_404_view(request, exception):
+#     return render(request, '404.html', status=404)
